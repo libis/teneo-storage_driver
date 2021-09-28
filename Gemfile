@@ -1,3 +1,4 @@
 source 'https://rubygems.org'
 
-gemspec name: 'teneo-storage_driver'
+gem 'coveralls', group: :test, require: false
+gemspec name: 'teneo-storage_driver', development_group: :test
