@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'libis/tools/extend/array'
 
 require_relative 'base'
 
@@ -131,6 +130,6 @@ module Teneo
         end
       end
     end
-    
+
   end
 end

@@ -3,6 +3,7 @@
 require 'pathname'
 require 'fileutils'
 require 'zlib'
+require 'activesupport/core_ext/enumerable'
 
 module Teneo
   module StorageDriver
@@ -316,7 +317,7 @@ module Teneo
           else
             e
           end
-        end.cleanup
+        end.compact_blank
       end
 
       # Get directory listing
@@ -332,7 +333,7 @@ module Teneo
           else
             e
           end
-        end.cleanup
+        end.compact_blank
       end
 
       # Get a File or Dir object for a given path. Path should exist.
@@ -467,6 +468,6 @@ module Teneo
 
       attr_accessor :path
     end
-    
+
   end
 end
