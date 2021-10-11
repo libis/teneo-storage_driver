@@ -2,8 +2,7 @@
 
 require 'pathname'
 require 'fileutils'
-require 'zlib'
-require 'activesupport/core_ext/enumerable'
+require 'active_support/core_ext/enumerable'
 
 module Teneo
   module StorageDriver
@@ -23,14 +22,14 @@ module Teneo
       # @param [String] protocol
       # @return [Teneo::StorageDriver::Base]
       def self.driver(protocol)
-        drivers.find { |d| d.protocol == protocol }
+        drivers&.find { |d| d.protocol == protocol }
       end
 
       # @param [String] value
       # @return [String]
       def self.protocol(value = nil)
         @protocol = value unless value.nil?
-        @protocol
+        @protocol || ''
       end
 
       # @param [String] value
@@ -44,7 +43,7 @@ module Teneo
       # @return [TrueClass, FalseClass]
       def self.local?(value = nil)
         @local = value unless value.nil?
-        @local
+        @local || false
       end
 
       class Entry
@@ -225,7 +224,7 @@ module Teneo
         # @return [String, Object]
         def read
           localize
-          return false unless exist?
+          return nil unless exist?
           ::File.open(local_path, 'rb') do |f|
             block_given? ? yield(f) : f.read
           end
@@ -233,6 +232,7 @@ module Teneo
 
         # @param [String] data
         def write(data = nil)
+          return unless data
           FileUtils.mkpath(::File.dirname(local_path))
           ::File.open(local_path, 'wb') do |f|
             block_given? ? yield(f) : f.write(data)
@@ -242,6 +242,7 @@ module Teneo
 
         # @param [String] data
         def append(data = nil)
+          return unless data
           localize
           FileUtils.mkpath(::File.dirname(local_path))
           ::File.open(local_path, 'ab') do |f|
@@ -294,7 +295,7 @@ module Teneo
 
       # @return [String (frozen)]
       def name
-        "#{self.class.name.split('::').last}-#{Zlib::crc32(root).to_s(36)}"
+        "#{self.class.name.split('::').last}-#{root.hash.abs.to_s(36)}"
       end
 
       # @return [String]
@@ -308,7 +309,7 @@ module Teneo
 
       # Get directory listing
       # @param [String] path
-      # @return [Array<String>]
+      # @return [Array<Teneo::StorageDriver::Base::File, Teneo::StorageDriver::Base::Dir>]
       def entries(path = nil)
         path ||= ::File::SEPARATOR
         dir_children(path) do |e|
@@ -331,7 +332,7 @@ module Teneo
           if block_given?
             yield e
           else
-            e
+            nil
           end
         end.compact_blank
       end
@@ -341,7 +342,7 @@ module Teneo
       # @return [Teneo::StorageDriver::Base::File, Teneo::StorageDriver::Base::Dir]
       def entry(path)
         return nil unless self.exist?(path)
-        #noinspection RubyYardReturnMatch
+        #noinspection RubyMismatchedReturnType
         (self.class.name + '::' + (self.is_file?(path) ? 'File' : 'Dir')).
           constantize.new(path: entry_path(path), driver: self)
       end
@@ -351,7 +352,7 @@ module Teneo
       # @return [Teneo::StorageDriver::Base::File]
       def file(path)
         return self.dir(path) if file_exist?(path) && !is_file?(path)
-        #noinspection RubyYardReturnMatch
+        #noinspection RubyMismatchedReturnType
         (self.class.name + '::File').constantize.new(path: entry_path(path), driver: self)
       end
 
@@ -361,7 +362,7 @@ module Teneo
       def dir(path = nil)
         path ||= ::File::SEPARATOR
         return self.file(path) if file_exist?(path) && is_file?(path)
-        #noinspection RubyYardReturnMatch
+        #noinspection RubyMismatchedReturnType
         (self.class.name + '::Dir').constantize.new(path: entry_path(path), driver: self)
       end
 
@@ -461,7 +462,7 @@ module Teneo
 
       # @param [String] path
       # @param [Proc] block
-      # @return [Array<String>]
+      # @return [Array<Teneo::StorageDriver::Base::File, Teneo::StorageDriver::Base::Dir>]
       def dir_children(path, &block)
         raise NotImplementedError, 'Method needs implementation'
       end

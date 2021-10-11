@@ -21,6 +21,7 @@ module Teneo
 
       class File < Base::File
         class Cleaner
+          # @param [String] tmpfile
           def initialize(tmpfile)
             @pid = Process.pid
             @tmpfile = tmpfile
@@ -36,6 +37,7 @@ module Teneo
 
         def initialize(path:, driver:)
           work_path = ::File.join(driver.work_dir, path)
+          #noinspection RubyMismatchedParameterType
           ObjectSpace.define_finalizer(self, Cleaner.new(work_path))
           super path: work_path, driver: driver
           @remote_path = path
@@ -99,7 +101,7 @@ module Teneo
       # A unique name for this storage driver instance
       # @return [String (frozen)]
       def name
-        "#{self.class.name.split('::').last}-#{Zlib::crc32("#{@host}#{@root}").to_s(36)}"
+        "#{self.class.name.split('::').last}-#{"#{@host}#{@root}".hash.abs.to_s(36)}"
       end
 
       # The working dir where local copies of remote files are stored
@@ -118,7 +120,7 @@ module Teneo
 
       # Create a directory
       # @param [String] path
-      # @return [Teneo::StorageDriver::Ftps::Dir, FalseClass]
+      # @return [Teneo::StorageDriver::Base::Dir, FalseClass]
       def mkdir(path)
         unless dir_exist?(path)
           ftp_service do |conn|
@@ -130,7 +132,7 @@ module Teneo
 
       # Create a directory tree
       # @param [String] path
-      # @return [Teneo::StorageDriver::Ftps::Dir, FalseClass]
+      # @return [Teneo::StorageDriver::Base::Dir, FalseClass]
       def mkpath(path)
         unless dir_exist?(path)
           unless ::File::SEPARATOR == path
@@ -224,13 +226,13 @@ module Teneo
       # @param [String] path remote directory
       # @return [FalseClass, TrueClass]
       def del_tree(path)
-        entries(path).map { |e| del_tree(e) } unless is_file?(path)
+        entries(path).map { |e| del_tree(e.driver_path) } unless is_file?(path)
         delete(path)
       end
 
       # get last modification time
       # @param [String] path
-      # @return [Time] file modification time
+      # @return [Time, nil] file modification time
       def mtime(path)
         ftp_service do |conn|
           conn.mtime(abspath(path))
@@ -242,7 +244,7 @@ module Teneo
       # rename a file or folder
       # @param [String] from_path
       # @param [String] to_path
-      # @return [String] new name
+      # @return [String, nil] new name
       def rename(from_path, to_path)
         ftp_service do |conn|
           conn.rename(abspath(from_path), abspath(to_path))
@@ -267,7 +269,7 @@ module Teneo
 
       # @param [String] path
       # @param [Proc] block
-      # @return [Array<String>]
+      # @return [Array<Teneo::StorageDriver::Ftps::File, Teneo::StorageDriver::Ftps::Dir>]
       def dir_children(path, &block)
         ftp_service do |conn|
           conn.nlst(abspath(path)).map do |e|

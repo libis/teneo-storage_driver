@@ -33,7 +33,7 @@ module Teneo
 
       # Create a directory
       # @param [String] path
-      # @return [Teneo::StorageDriver::Nfs::Dir, FalseClass]
+      # @return [Teneo::StorageDriver::Base::Dir, FalseClass]
       def mkdir(path)
         FileUtils.mkdir(abspath(path))
         exist?(path) ? dir(path) : false
@@ -41,7 +41,7 @@ module Teneo
 
       # Create a directory tree
       # @param [String] path
-      # @return [Teneo::StorageDriver::Nfs::Dir, FalseClass]
+      # @return [Teneo::StorageDriver::Base::Dir, FalseClass]
       def mkpath(path)
         FileUtils.mkpath(abspath(path))
         exist?(path) ? dir(path) : false
@@ -124,6 +124,9 @@ module Teneo
 
       protected
 
+      # @param [String] path
+      # @param [Proc] block
+      # @return [Array<Teneo::StorageDriver::Nfs::File, Teneo::StorageDriver::Nfs::Dir>]
       def dir_children(path, &block)
         ::Dir.children(abspath(path)).map do |e|
           block.call ::File.join(path, e)
