@@ -2,7 +2,6 @@
 
 require 'pathname'
 require 'fileutils'
-require 'active_support/core_ext/enumerable'
 
 module Teneo
   module StorageDriver
@@ -318,7 +317,7 @@ module Teneo
           else
             e
           end
-        end.compact_blank
+        end.compact
       end
 
       # Get directory listing
@@ -334,7 +333,7 @@ module Teneo
           else
             nil
           end
-        end.compact_blank
+        end.compact
       end
 
       # Get a File or Dir object for a given path. Path should exist.
