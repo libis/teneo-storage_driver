@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "teneo-storage_driver"
   spec.version = Teneo::StorageDriver::VERSION
   spec.authors = ["Kris Dekeyser"]
-  spec.email = ["kris.dekeyser@libis.be"]
+  spec.email = ["kris.dekeyser@kuleuven.be"]
 
   spec.summary = %q{StorageDriver library for Teneo.}
   spec.description = %q{This gem contains the supported storage drivers for Teneo.}
